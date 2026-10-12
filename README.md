@@ -70,6 +70,10 @@ Set it one of two ways — both are correct:
 > ⚠️ Do **not** hand-double the `$` to `$$`. Dokploy already escapes it, so `$$`
 > would survive literally and the login would never match.
 
+> ⚠️ `CEZAR_AUTH_HASH` must be a **hash**, never the password itself. Traefik's
+> Basic Auth only accepts `$apr1$…` (MD5), `{SHA}…` or `$2y$…` (bcrypt); a plain
+> password or passphrase makes every login fail with `401`.
+
 After changing any value, redeploy so the labels are re-rendered.
 
 ## Deploy
