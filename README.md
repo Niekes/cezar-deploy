@@ -151,6 +151,32 @@ Then in the cockpit, **Settings → Projects → Add project → Open local fold
 and register repos under `/srv/cezar/repos` (or clone them there with *Clone
 from GitHub…*). That path is the `CEZAR_REPOS_PATH` bind mount on the host.
 
+## Recreate from scratch (server wipe)
+
+Nothing on the server is part of the setup — the repo is the only input. Wiping
+Dokploy and the host is fine; the following brings cezar back:
+
+1. **Install Dokploy** fresh (it creates the `dokploy-network` Traefik attaches to).
+2. **Project → New service → type `Compose`**.
+3. **Source**: your GitHub account, repo `Niekes/cezar-deploy`, branch `main`
+   (or any commit/tag you pinned).
+4. Leave the **Domains tab empty** — routing, TLS and Basic Auth come from the
+   Traefik labels in the compose file, so a Dokploy-injected domain would clash.
+5. **Environment tab**: paste the *required* variables (`CEZAR_DOMAIN`,
+   `CEZAR_AUTH_USER`, `CEZAR_AUTH_HASH` — an `apr1` hash, keep single quotes so
+   the `$` stay literal). Optional knobs as you like; everything has a default.
+6. **Deploy** and wait for `healthy`.
+7. Do the first-run logins (previous section).
+
+Automatically recreated: the `cezar_home` volume, the repos bind mount
+(`CEZAR_REPOS_PATH`, seeded + chowned by the entrypoint), the image build and
+the Let's Encrypt certificate. The password hash and any secrets are **never**
+in the repo — you re-enter them in the Environment tab. What you lose on a wipe
+(by design): provider logins, workspaces and the Basic-Auth password hash.
+
+The same file works without Dokploy, against a standalone Traefik:
+`cp .env.example .env && ${EDITOR:-vi} .env && docker compose up -d --build`.
+
 ## Updating
 
 Bump `CEZAR_VERSION` / `CLAUDE_CODE_VERSION` (or the optional `CODEX_VERSION`,
