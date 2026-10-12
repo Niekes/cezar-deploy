@@ -110,12 +110,19 @@ Then open `https://<CEZAR_DOMAIN>` and log in with `CEZAR_AUTH_USER` + password.
 ## First-run setup
 
 cezar shells out to the agent CLIs; log them in **inside the container** so the
-credentials land in the persistent `cezar_home` volume:
+credentials land in the persistent `cezar_home` volume. The compose file starts
+the container as root, so pass `-u 1001` (the `cezar` user) — otherwise the CLI
+login runs as root, writes root-owned `0600` credential files that the cezar
+process can't read, and the cockpit keeps showing them as unavailable:
 
 ```bash
-docker exec -it cezar claude          # one-time Claude Code login
-docker exec -it cezar gh auth login   # optional: GitHub issues/PRs
+docker exec -u 1001 -it cezar claude            # one-time Claude Code login
+docker exec -u 1001 -it cezar gh auth login     # optional: GitHub issues/PRs
 ```
+
+Restart the container afterwards so cezar re-runs its startup detection:
+`docker restart cezar` (the log should then show `✓ claude` / `✓ gh
+authenticated`).
 
 (the container name is `CEZAR_CONTAINER_NAME`, default `cezar`)
 
