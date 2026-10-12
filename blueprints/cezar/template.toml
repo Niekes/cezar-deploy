@@ -1,0 +1,49 @@
+# Dokploy blueprint variables — see the root README, "Option C".
+#
+# FILL THESE (empty by default so a forgotten value is loud at deploy time):
+#   cezar_domain   -> the hostname Traefik serves cezar on (DNS must point here)
+#   cezar_auth_user-> HTTP Basic-Auth login name (an email works fine)
+#   cezar_auth_hash-> HTTP Basic-Auth password HASH, e.g. from
+#                     `openssl passwd -apr1 'your-password'` (a hash, never the
+#                     password itself)
+#
+# Everything else has a workable default.
+
+[variables]
+cezar_domain = "${domain}"
+cezar_auth_user = ""
+cezar_auth_hash = ""
+cezar_repos_path = "/srv/cezar/repos"
+cezar_git_name = "cezar"
+cezar_git_email = "cezar@local"
+tz = "UTC"
+traefik_network = "dokploy-network"
+traefik_entrypoint_web = "web"
+traefik_entrypoint_secure = "websecure"
+traefik_cert_resolver = "letsencrypt"
+
+[config]
+mounts = []
+
+# No [[config.domains]] on purpose: routing, TLS and Basic Auth are declared as
+# Traefik labels inside docker-compose.yml, so Dokploy must NOT inject its own
+# domain config (its generated labels clash with the auth middleware). Keeping
+# Dokploy's Domains tab empty and the labels in the compose is what makes this
+# template portable.
+#
+# Each key below lands in the app's environment and feeds the `${VAR}`
+# placeholders inside docker-compose.yml at deploy time.
+
+[config.env]
+APP_NAME = "${APP_NAME}"
+CEZAR_DOMAIN = "${cezar_domain}"
+CEZAR_AUTH_USER = "${cezar_auth_user}"
+CEZAR_AUTH_HASH = "${cezar_auth_hash}"
+CEZAR_REPOS_PATH = "${cezar_repos_path}"
+CEZAR_GIT_NAME = "${cezar_git_name}"
+CEZAR_GIT_EMAIL = "${cezar_git_email}"
+TZ = "${tz}"
+TRAEFIK_NETWORK = "${traefik_network}"
+TRAEFIK_ENTRYPOINT_WEB = "${traefik_entrypoint_web}"
+TRAEFIK_ENTRYPOINT_SECURE = "${traefik_entrypoint_secure}"
+TRAEFIK_CERT_RESOLVER = "${traefik_cert_resolver}"

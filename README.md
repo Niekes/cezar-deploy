@@ -31,6 +31,9 @@ Self-host the [cezar](https://cezar.run) cockpit for your AI coding agents
 | `entrypoint.sh` | Fixes the repos mount, seeds a workspace, drops privileges. |
 | `docker-compose.yml` | Service, volumes and Traefik routing/auth labels. |
 | `.env.example` | All configuration knobs, with defaults. |
+| `meta.json` | Dokploy template index (this file *is* the template list). |
+| `blueprints/cezar/` | Dokploy blueprint: `docker-compose.yml`, `template.toml`, `meta.json`, `logo.svg` (image-based, see Option C). |
+| `.github/workflows/docker-publish.yml` | CI: builds + publishes `ghcr.io/niekes/cezar` on every push to `main`. |
 
 ## Configuration
 
@@ -106,6 +109,30 @@ This expects an external Traefik network named by `TRAEFIK_NETWORK`
 (`dokploy-network` by default), with `web`/`websecure` entrypoints and a
 `letsencrypt` certresolver.
 
+### Option C — Dokploy template (one-click blueprint)
+
+The repo doubles as a Dokploy **template source**: the image is published to
+`ghcr.io/niekes/cezar` by GitHub Actions, and `blueprints/cezar/` defines the
+blueprint — so cezar installs from the Templates dialog exactly like the
+official templates.
+
+1. **Publish & expose the image** (once — the workflow runs automatically on
+   push to `main`). After the first successful run make the package **public**
+   so your server can pull it without credentials:
+   GitHub → repo → *Packages* → `cezar` → *Package settings* →
+   *Change visibility* → **Public**.
+2. In **Dokploy**: *Create Service → Docker Compose → Templates*. In the
+   template dialog set **Base URL (optional)** to
+   `https://raw.githubusercontent.com/Niekes/cezar-deploy/main`.
+3. Pick the **cezar** template and fill the three required fields
+   (`cezar_domain`, `cezar_auth_user`, `cezar_auth_hash` — an `apr1` hash, see
+   *The Basic-Auth password*). Everything else already has a default.
+4. **Deploy**, then do the first-run logins below. The container name is the
+   app name you gave it — find it with `docker ps | grep cezar`.
+
+This is **the fastest way back** after a full server wipe (see below): no build
+on the server, no `.env` to reconstruct — the template dialog *is* the config.
+
 Then open `https://<CEZAR_DOMAIN>` and log in with `CEZAR_AUTH_USER` + password.
 
 ## First-run setup
@@ -125,7 +152,9 @@ Restart the container afterwards so cezar re-runs its startup detection:
 `docker restart cezar` (the log should then show `✓ claude` / `✓ gh
 authenticated`).
 
-(the container name is `CEZAR_CONTAINER_NAME`, default `cezar`)
+(the container name is `CEZAR_CONTAINER_NAME`, default `cezar`; for a
+template-created app it is the app name you typed in Dokploy —
+`docker ps | grep cezar` finds it)
 
 ### Optional runners (codex, opencode, cursor, pi, junie, copilot)
 
@@ -177,12 +206,21 @@ in the repo — you re-enter them in the Environment tab. What you lose on a wip
 The same file works without Dokploy, against a standalone Traefik:
 `cp .env.example .env && ${EDITOR:-vi} .env && docker compose up -d --build`.
 
+Fastest path on a fresh Dokploy: **Option C** — Templates dialog, Base URL
+`https://raw.githubusercontent.com/Niekes/cezar-deploy/main`, pick *cezar*, fill
+the three required fields, deploy.
+
 ## Updating
 
 Bump `CEZAR_VERSION` / `CLAUDE_CODE_VERSION` (or the optional `CODEX_VERSION`,
 `OPENCODE_VERSION`, `PI_VERSION`, `COPILOT_VERSION` ARGs in the `Dockerfile`) and
 redeploy — the image is the source of truth. Don't let cezar self-update inside
 the container.
+
+With **Option C** (published image) an update is: merge to `main` → CI pushes a
+new `ghcr.io/niekes/cezar:latest` → *Redeploy* in Dokploy (pulls the new image).
+To pin a specific build, bump the blueprint's `image:` tag to
+`ghcr.io/niekes/cezar:sha-<commit>`.
 
 ## Operating notes
 

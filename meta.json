@@ -1,0 +1,21 @@
+[
+  {
+    "id": "cezar",
+    "name": "cezar",
+    "version": "latest",
+    "description": "Private AI coding cockpit: cezar with Claude Code plus optional Codex / OpenCode / Cursor / pi / Junie / Copilot runners, behind Traefik TLS + HTTP Basic Auth.",
+    "logo": "logo.svg",
+    "links": {
+      "github": "https://github.com/Niekes/cezar-deploy",
+      "website": "https://cezar.run",
+      "docs": "https://github.com/Niekes/cezar-deploy#readme"
+    },
+    "tags": [
+      "ai",
+      "developer-tools",
+      "coding",
+      "agent",
+      "self-hosted"
+    ]
+  }
+]
