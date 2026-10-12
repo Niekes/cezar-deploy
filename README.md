@@ -13,7 +13,8 @@ Self-host the [cezar](https://cezar.run) cockpit for your AI coding agents
 ## What this is
 
 - cezar ships as an **npm package only** (no official image), so the
-  [`Dockerfile`](Dockerfile) builds one: Node 22 + cezar + Claude Code + `gh`.
+  [`Dockerfile`](Dockerfile) builds one: Node 22 + cezar + Claude Code + `gh`
+  plus the optional agent CLIs (Codex, OpenCode, Cursor, pi, Junie, Copilot).
 - cezar has **no authentication of its own**, so a reverse proxy **must** sit in
   front of it. This template uses Traefik for **TLS + Basic Auth**.
 - Routing/TLS/auth are declared as Traefik **labels** in
@@ -26,7 +27,7 @@ Self-host the [cezar](https://cezar.run) cockpit for your AI coding agents
 
 | File | Purpose |
 |------|---------|
-| `Dockerfile` | Builds the image: Node 22 + cezar + Claude Code + `gh`. |
+| `Dockerfile` | Builds the image: Node 22 + cezar + Claude Code + `gh` + optional agent CLIs. |
 | `entrypoint.sh` | Fixes the repos mount, seeds a workspace, drops privileges. |
 | `docker-compose.yml` | Service, volumes and Traefik routing/auth labels. |
 | `.env.example` | All configuration knobs, with defaults. |
@@ -126,13 +127,34 @@ authenticated`).
 
 (the container name is `CEZAR_CONTAINER_NAME`, default `cezar`)
 
+### Optional runners (codex, opencode, cursor, pi, junie, copilot)
+
+The image bakes in all six CLIs, so the banner lists them as installed. Each still
+needs a one-time login before you can actually use it — always as the `cezar`
+user, then restart:
+
+| Runner | Login (inside the container) |
+| --- | --- |
+| codex | `docker exec -u 1001 -it cezar codex login` — ChatGPT OAuth, a URL is printed |
+| opencode | `docker exec -u 1001 -it cezar opencode auth login` — choose a provider (Anthropic/OpenAI…): OAuth or API key |
+| cursor | `docker exec -u 1001 -it cezar agent login` — Cursor OAuth in your browser |
+| pi | `docker exec -u 1001 -it cezar pi` — first-run interactive sign-in |
+| junie | `docker exec -u 1001 -it cezar junie` — welcome screen: JetBrains account OAuth, or a Junie API key from <https://junie.jetbrains.com/cli> |
+| copilot | `docker exec -u 1001 -it cezar copilot login` — GitHub OAuth (reuses your `gh` account) |
+
+Note that the banner's `✓` only means "CLI installed" (cezar probes `--version`);
+it does **not** mean "authenticated" — an unauthenticated runner fails when you
+start a task on it, so do the logins above once per container lifetime (they
+persist in the `cezar_home` volume).
+
 Then in the cockpit, **Settings → Projects → Add project → Open local folder…**
 and register repos under `/srv/cezar/repos` (or clone them there with *Clone
 from GitHub…*). That path is the `CEZAR_REPOS_PATH` bind mount on the host.
 
 ## Updating
 
-Bump `CEZAR_VERSION` / `CLAUDE_CODE_VERSION` (or edit the `Dockerfile`) and
+Bump `CEZAR_VERSION` / `CLAUDE_CODE_VERSION` (or the optional `CODEX_VERSION`,
+`OPENCODE_VERSION`, `PI_VERSION`, `COPILOT_VERSION` ARGs in the `Dockerfile`) and
 redeploy — the image is the source of truth. Don't let cezar self-update inside
 the container.
 

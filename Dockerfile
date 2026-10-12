@@ -13,6 +13,10 @@ FROM node:22-bookworm
 # Pin these for reproducible deploys.
 ARG CEZAR_VERSION=latest
 ARG CLAUDE_CODE_VERSION=latest
+ARG CODEX_VERSION=0.162.1
+ARG OPENCODE_VERSION=1.19.0
+ARG PI_VERSION=1.1.0
+ARG COPILOT_VERSION=1.0.95
 
 # Match the owner of the host's repos bind mount (see docker-compose.yml).
 ARG UID=1001
@@ -44,6 +48,37 @@ RUN npm install --global \
       "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
  && npm cache clean --force
 
+# Optional agent CLIs so the cockpit can offer every runner. They install as
+# PATH binaries that cezar's startup detection probes (`bin --version`), so no
+# extra config is needed — only a one-time `… login` per CLI (see README).
+RUN npm install --global --no-fund --no-audit \
+      "@openai/codex@${CODEX_VERSION}" \
+      "opencode-ai@${OPENCODE_VERSION}" \
+      "@earendil-works/pi-coding-agent@${PI_VERSION}" \
+      "@github/copilot@${COPILOT_VERSION}" \
+ && npm cache clean --force
+
+# Cursor CLI installs into $HOME/.local (root during the build). /root is not
+# traversable by the unprivileged cezar user, so move the whole versioned
+# package to /opt (world-readable) and symlink its launcher onto PATH as
+# `agent`, which is what cezar runs.
+RUN curl -fsSL https://cursor.com/install -o /tmp/cursor-install.sh \
+ && bash /tmp/cursor-install.sh >/dev/null \
+ && mv /root/.local/share/cursor-agent/versions/* /opt/cursor-agent \
+ && ln -sfn /opt/cursor-agent/cursor-agent /usr/local/bin/agent \
+ && rm -rf /root/.local \
+ && rm -f /tmp/cursor-install.sh
+
+# Junie CLI (JetBrains) — its shim resolves the install tree through
+# $JUNIE_DATA, so move the tree to /opt and default that env var there.
+RUN curl -fsSL https://junie.jetbrains.com/install.sh -o /tmp/junie-install.sh \
+ && bash /tmp/junie-install.sh >/dev/null \
+ && mv /root/.local/share/junie /opt/junie-data \
+ && ln -sfn "$(ls -d /opt/junie-data/versions/*/ | head -1)" /opt/junie-data/current \
+ && mv /root/.local/bin/junie /usr/local/bin/junie \
+ && rm -rf /root/.local \
+ && rm -f /tmp/junie-install.sh
+
 # Unprivileged user matching the host UID/GID of the repos bind mount.
 RUN groupadd -g "${GID}" cezar \
  && useradd -m -u "${UID}" -g "${GID}" -s /bin/bash cezar
@@ -58,6 +93,7 @@ WORKDIR /srv/cezar/repos
 
 # No OS keychain in a container -> store the secrets data key as a 0600 file.
 ENV HOME=/home/cezar \
+    JUNIE_DATA=/opt/junie-data \
     CEZ_NO_BANNER=1 \
     CEZ_SECRETS_KEYCHAIN=0
 
