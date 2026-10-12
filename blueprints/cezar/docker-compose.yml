@@ -11,6 +11,12 @@
 #
 # Required fields in the template dialog: cezar_domain, cezar_auth_user,
 # cezar_auth_hash (an apr1 hash, see the root README).
+#
+# Router/middleware/service NAMES are prefixed with CEZAR_ROUTER_PREFIX
+# (default "cezar"). Traefik names are global, so running a SECOND instance on
+# the same Dokploy needs a distinct prefix (e.g. "cezartest"), otherwise the
+# routers collide and the last one wins. The default keeps single-instance
+# behaviour identical to the build-based route.
 
 services:
   cezar:
@@ -52,24 +58,24 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
-      - "traefik.http.services.cezar.loadbalancer.server.port=4321"
+      - "traefik.http.services.${CEZAR_ROUTER_PREFIX}.loadbalancer.server.port=4321"
 
       # --- HTTP (web): always redirect to HTTPS ---
-      - "traefik.http.routers.cezar-web.rule=Host(`${CEZAR_DOMAIN}`)"
-      - "traefik.http.routers.cezar-web.entrypoints=${TRAEFIK_ENTRYPOINT_WEB}"
-      - "traefik.http.routers.cezar-web.service=cezar"
-      - "traefik.http.routers.cezar-web.middlewares=cezar-https"
-      - "traefik.http.middlewares.cezar-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.cezar-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.${CEZAR_ROUTER_PREFIX}-web.rule=Host(`${CEZAR_DOMAIN}`)"
+      - "traefik.http.routers.${CEZAR_ROUTER_PREFIX}-web.entrypoints=${TRAEFIK_ENTRYPOINT_WEB}"
+      - "traefik.http.routers.${CEZAR_ROUTER_PREFIX}-web.service=${CEZAR_ROUTER_PREFIX}"
+      - "traefik.http.routers.${CEZAR_ROUTER_PREFIX}-web.middlewares=${CEZAR_ROUTER_PREFIX}-https"
+      - "traefik.http.middlewares.${CEZAR_ROUTER_PREFIX}-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.${CEZAR_ROUTER_PREFIX}-https.redirectscheme.permanent=true"
 
       # --- HTTPS (websecure): Let's Encrypt TLS + Basic Auth ---
-      - "traefik.http.routers.cezar-secure.rule=Host(`${CEZAR_DOMAIN}`)"
-      - "traefik.http.routers.cezar-secure.entrypoints=${TRAEFIK_ENTRYPOINT_SECURE}"
-      - "traefik.http.routers.cezar-secure.service=cezar"
-      - "traefik.http.routers.cezar-secure.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.cezar-secure.middlewares=cezar-auth"
+      - "traefik.http.routers.${CEZAR_ROUTER_PREFIX}-secure.rule=Host(`${CEZAR_DOMAIN}`)"
+      - "traefik.http.routers.${CEZAR_ROUTER_PREFIX}-secure.entrypoints=${TRAEFIK_ENTRYPOINT_SECURE}"
+      - "traefik.http.routers.${CEZAR_ROUTER_PREFIX}-secure.service=${CEZAR_ROUTER_PREFIX}"
+      - "traefik.http.routers.${CEZAR_ROUTER_PREFIX}-secure.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${CEZAR_ROUTER_PREFIX}-secure.middlewares=${CEZAR_ROUTER_PREFIX}-auth"
       # Credentials come from the template dialog, never from this file.
-      - "traefik.http.middlewares.cezar-auth.basicauth.users=${CEZAR_AUTH_USER}:${CEZAR_AUTH_HASH}"
+      - "traefik.http.middlewares.${CEZAR_ROUTER_PREFIX}-auth.basicauth.users=${CEZAR_AUTH_USER}:${CEZAR_AUTH_HASH}"
 
 volumes:
   cezar_home:

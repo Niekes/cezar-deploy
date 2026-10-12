@@ -14,6 +14,10 @@ cezar_domain = "${domain}"
 cezar_auth_user = ""
 cezar_auth_hash = ""
 cezar_repos_path = "/srv/cezar/repos"
+# Traefik router/middleware/service name prefix. Keep "cezar" for a single
+# instance. If you run a SECOND cezar on the same Dokploy, give it a distinct
+# value (e.g. "cezartest") so its Traefik names don't collide with the first.
+cezar_router_prefix = "cezar"
 cezar_git_name = "cezar"
 cezar_git_email = "cezar@local"
 tz = "UTC"
@@ -40,6 +44,7 @@ CEZAR_DOMAIN = "${cezar_domain}"
 CEZAR_AUTH_USER = "${cezar_auth_user}"
 CEZAR_AUTH_HASH = "${cezar_auth_hash}"
 CEZAR_REPOS_PATH = "${cezar_repos_path}"
+CEZAR_ROUTER_PREFIX = "${cezar_router_prefix}"
 CEZAR_GIT_NAME = "${cezar_git_name}"
 CEZAR_GIT_EMAIL = "${cezar_git_email}"
 TZ = "${tz}"

@@ -126,7 +126,11 @@ official templates.
    `https://raw.githubusercontent.com/Niekes/cezar-deploy/main`.
 3. Pick the **cezar** template and fill the three required fields
    (`cezar_domain`, `cezar_auth_user`, `cezar_auth_hash` — an `apr1` hash, see
-   *The Basic-Auth password*). Everything else already has a default.
+   *The Basic-Auth password*). Everything else already has a default. The only
+   optional field worth touching is `cezar_router_prefix` (default `cezar`):
+   give it a distinct value if you ever run a **second** cezar instance on the
+   same Dokploy, so its Traefik router/middleware names don't collide with the
+   first.
 4. **Deploy**, then do the first-run logins below. The container name is the
    app name you gave it — find it with `docker ps | grep cezar`.
 
