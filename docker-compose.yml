@@ -1,0 +1,81 @@
+# cezar on Docker Compose + Traefik.
+#
+# cezar has NO authentication of its own and ships as an npm package only, so:
+#   * ./Dockerfile builds the image (cezar + Claude Code + gh on Node 22),
+#   * Traefik terminates TLS and enforces HTTP Basic Auth.
+#
+# Routing/TLS/auth are declared here as Traefik labels (not Dokploy's Domains
+# tab) so they are portable: the same file works with Dokploy (Domains tab left
+# EMPTY) and with a standalone Traefik.
+#
+# Everything instance-specific comes from the environment — see .env.example.
+# Required: CEZAR_DOMAIN, CEZAR_AUTH_USER, CEZAR_AUTH_HASH.
+
+services:
+  cezar:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CEZAR_VERSION: ${CEZAR_VERSION:-latest}
+        CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-latest}
+        UID: ${CEZAR_UID:-1001}
+        GID: ${CEZAR_GID:-1001}
+    image: ${CEZAR_IMAGE:-cezar-cockpit:latest}
+    container_name: ${CEZAR_CONTAINER_NAME:-cezar}
+    restart: unless-stopped
+    # Root only so the entrypoint can chown the repos bind mount, then it drops
+    # to the unprivileged `cezar` user. Your host files are never owned by root.
+    user: "0:0"
+    environment:
+      HOME: /home/cezar
+      # Hosted mode: no local-machine affordances. The proxy in front MUST
+      # enforce auth for you.
+      CEZ_REMOTE: "1"
+      CEZ_NO_BANNER: "1"
+      CEZ_SECRETS_KEYCHAIN: "0"
+      # Where "Add project" writes repos (container path of the bind mount).
+      CEZ_BROWSE_ROOT: /srv/cezar/repos
+      CEZ_PROJECTS_DIR: /srv/cezar/repos
+      CEZAR_REPOS_DIR: /srv/cezar/repos
+      CEZAR_GIT_NAME: ${CEZAR_GIT_NAME:-cezar}
+      CEZAR_GIT_EMAIL: ${CEZAR_GIT_EMAIL:-cezar@local}
+      TZ: ${TZ:-UTC}
+    volumes:
+      # Persistent home: workspace config, the Claude Code / gh logins, secrets.
+      - cezar_home:/home/cezar
+      # Your git checkouts, on the host (see CEZAR_REPOS_PATH).
+      - ${CEZAR_REPOS_PATH:-/srv/cezar/repos}:/srv/cezar/repos
+    expose:
+      - "4321"
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-dokploy-network}"
+      - "traefik.http.services.cezar.loadbalancer.server.port=4321"
+
+      # --- HTTP (web): always redirect to HTTPS ---
+      - "traefik.http.routers.cezar-web.rule=Host(`${CEZAR_DOMAIN:?set CEZAR_DOMAIN}`)"
+      - "traefik.http.routers.cezar-web.entrypoints=${TRAEFIK_ENTRYPOINT_WEB:-web}"
+      - "traefik.http.routers.cezar-web.service=cezar"
+      - "traefik.http.routers.cezar-web.middlewares=cezar-https"
+      - "traefik.http.middlewares.cezar-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.cezar-https.redirectscheme.permanent=true"
+
+      # --- HTTPS (websecure): Let's Encrypt TLS + Basic Auth ---
+      - "traefik.http.routers.cezar-secure.rule=Host(`${CEZAR_DOMAIN:?set CEZAR_DOMAIN}`)"
+      - "traefik.http.routers.cezar-secure.entrypoints=${TRAEFIK_ENTRYPOINT_SECURE:-websecure}"
+      - "traefik.http.routers.cezar-secure.service=cezar"
+      - "traefik.http.routers.cezar-secure.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      - "traefik.http.routers.cezar-secure.middlewares=cezar-auth"
+      # Credentials come from the environment, never from this file. See README.
+      - "traefik.http.middlewares.cezar-auth.basicauth.users=${CEZAR_AUTH_USER:?set CEZAR_AUTH_USER}:${CEZAR_AUTH_HASH:?set CEZAR_AUTH_HASH}"
+
+volumes:
+  cezar_home:
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-dokploy-network}

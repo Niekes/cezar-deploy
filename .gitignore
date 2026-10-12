@@ -1,0 +1,3 @@
+# Never commit the generated credentials.
+.credentials.txt
+.env
