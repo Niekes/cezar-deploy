@@ -15,6 +15,10 @@
 services:
   cezar:
     image: ghcr.io/niekes/cezar:latest
+    # Dokploy runs `docker compose up` without --pull, so without this every
+    # redeploy would reuse the locally cached :latest. pull_policy: always
+    # forces a re-pull, so a freshly published image lands on the next deploy.
+    pull_policy: always
     # Dokploy injects APP_NAME (unique per app), so the container gets a
     # stable, predictable name like on the build-based route.
     container_name: ${APP_NAME}

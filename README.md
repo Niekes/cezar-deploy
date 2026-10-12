@@ -133,6 +133,12 @@ official templates.
 This is **the fastest way back** after a full server wipe (see below): no build
 on the server, no `.env` to reconstruct — the template dialog *is* the config.
 
+The blueprint sets `pull_policy: always`, so **every redeploy re-pulls the
+image** and a freshly published `:latest` lands automatically (Dokploy itself
+runs `docker compose up` without `--pull` and would otherwise keep the cached
+image). To pin a specific build instead, change the blueprint's `image:` tag to
+`ghcr.io/niekes/cezar:sha-<commit>`.
+
 Then open `https://<CEZAR_DOMAIN>` and log in with `CEZAR_AUTH_USER` + password.
 
 ## First-run setup
