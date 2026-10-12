@@ -1,5 +1,7 @@
 # cezar on Docker + Traefik
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Self-host the [cezar](https://cezar.run) cockpit for your AI coding agents
 (Claude Code, Codex, OpenCode …) on any VPS with Docker and Traefik — including
 [Dokploy](https://dokploy.com). Traefik terminates **HTTPS** and enforces
@@ -111,6 +113,8 @@ docker exec -it cezar claude          # one-time Claude Code login
 docker exec -it cezar gh auth login   # optional: GitHub issues/PRs
 ```
 
+(the container name is `CEZAR_CONTAINER_NAME`, default `cezar`)
+
 Then in the cockpit, **Settings → Projects → Add project → Open local folder…**
 and register repos under `/srv/cezar/repos` (or clone them there with *Clone
 from GitHub…*). That path is the `CEZAR_REPOS_PATH` bind mount on the host.
@@ -138,4 +142,4 @@ the container.
 
 ## License
 
-None yet — add one if you want others to reuse this template.
+[MIT](LICENSE)
