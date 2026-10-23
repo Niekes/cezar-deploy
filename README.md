@@ -1,11 +1,36 @@
-# 🚀 cezar on Docker + Traefik
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Niekes/cezar-deploy/main/assets/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Niekes/cezar-deploy/main/assets/logo.png">
+    <img src="https://raw.githubusercontent.com/Niekes/cezar-deploy/main/assets/logo.png" alt="cezar" width="110">
+  </picture>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<h1 align="center">cezar on Docker + Traefik</h1>
 
-Self-host the [cezar](https://cezar.run) cockpit for your AI coding agents
-(Claude Code, Codex, OpenCode …) on any VPS with Docker and Traefik — including
-[Dokploy](https://dokploy.com). Traefik terminates **HTTPS** and enforces
-**HTTP Basic Auth**; cezar runs 24/7 and you drive it from the browser.
+<p align="center">
+  <strong>Self-host the <a href="https://cezar.run">cezar</a> cockpit for your AI coding agents.</strong><br>
+  Claude Code, Codex, OpenCode … on any VPS with Docker and Traefik — including <a href="https://dokploy.com">Dokploy</a>.<br>
+  Traefik terminates <strong>HTTPS</strong> and enforces <strong>HTTP Basic Auth</strong>; cezar runs 24/7 and you drive it from the browser.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Niekes/cezar-deploy/actions/workflows/docker-publish.yml"><img src="https://github.com/Niekes/cezar-deploy/actions/workflows/docker-publish.yml/badge.svg" alt="publish image"></a>
+  <a href="https://github.com/Niekes/cezar-deploy/releases/latest"><img src="https://img.shields.io/github/v/release/Niekes/cezar-deploy?display_name=release&label=image" alt="image version"></a>
+  <a href="https://www.npmjs.com/package/@open-mercato/cezar"><img src="https://img.shields.io/npm/v/@open-mercato/cezar?label=upstream" alt="upstream version"></a>
+  <a href="https://github.com/Niekes/cezar-deploy/pkgs/container/cezar"><img src="https://img.shields.io/badge/ghcr.io-niekes%2Fcezar-blue?logo=docker&logoColor=white" alt="GHCR"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow.svg" alt="MIT License"></a>
+</p>
+
+<p align="center">
+  <a href="#%EF%B8%8F-configuration">Configuration</a> ·
+  <a href="#-deploy">Deploy</a> ·
+  <a href="#-first-run-setup">First-run setup</a> ·
+  <a href="#%EF%B8%8F-updating">Updating</a> ·
+  <a href="#%EF%B8%8F-recreate-from-scratch-server-wipe">Server wipe</a>
+</p>
+
+---
 
 > 🔐 **No secrets in this repo.** Domain, credentials and paths are all
 > environment variables — see [`.env.example`](.env.example).
@@ -31,8 +56,9 @@ Self-host the [cezar](https://cezar.run) cockpit for your AI coding agents
 | `entrypoint.sh` | Fixes the repos mount, seeds a workspace, drops privileges. |
 | `docker-compose.yml` | Service, volumes and Traefik routing/auth labels. |
 | `.env.example` | All configuration knobs, with defaults. |
+| `assets/` | README logo (light + dark variant). |
 | `meta.json` | Dokploy template index (this file *is* the template list). |
-| `blueprints/cezar/` | Dokploy blueprint: `docker-compose.yml`, `template.toml`, `meta.json`, `logo.svg` (image-based, see Option C). |
+| `blueprints/cezar/` | Dokploy blueprint: `docker-compose.yml`, `template.toml`, `meta.json`, `logo.png` (image-based, see Option C). |
 | `.github/workflows/docker-publish.yml` | CI: builds + publishes `ghcr.io/niekes/cezar` on every push to `main`. |
 
 ## ⚙️ Configuration
