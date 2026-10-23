@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # release per new cezar version
   packages: write
 
 concurrency:
@@ -67,3 +67,20 @@ jobs:
             ghcr.io/niekes/cezar:sha-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # One release per new cezar version (nightly no-op builds skip this).
+      # Watch the repo for "Releases" to get pinged when a redeploy is due.
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CEZAR: ${{ steps.v.outputs.cezar }}
+          CLAUDE: ${{ steps.v.outputs.claude }}
+        run: |
+          gh release view "cezar-$CEZAR" >/dev/null 2>&1 && exit 0
+          gh release create "cezar-$CEZAR" --title "cezar $CEZAR" --notes "\
+          Image: \`ghcr.io/niekes/cezar:$CEZAR\` (Claude Code $CLAUDE)
+
+          Upstream changes: https://github.com/open-mercato/cezar/releases/tag/v$CEZAR
+
+          Redeploy in Dokploy to roll it out."
