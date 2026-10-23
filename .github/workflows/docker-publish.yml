@@ -13,6 +13,9 @@ name: publish image
 on:
   push:
     branches: [main]
+  # New cezar / Claude Code releases land on npm, not here — rebuild daily.
+  schedule:
+    - cron: "0 4 * * *"
   workflow_dispatch:
 
 permissions:
@@ -29,6 +32,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Pass concrete versions instead of "latest": the build-arg is part of the
+      # layer cache key, so a new npm release busts the cached install layer.
+      - name: Resolve npm versions
+        id: v
+        run: |
+          echo "cezar=$(npm view @open-mercato/cezar version)" >> "$GITHUB_OUTPUT"
+          echo "claude=$(npm view @anthropic-ai/claude-code version)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -47,8 +58,12 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
+          build-args: |
+            CEZAR_VERSION=${{ steps.v.outputs.cezar }}
+            CLAUDE_CODE_VERSION=${{ steps.v.outputs.claude }}
           tags: |
             ghcr.io/niekes/cezar:latest
+            ghcr.io/niekes/cezar:${{ steps.v.outputs.cezar }}
             ghcr.io/niekes/cezar:sha-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
